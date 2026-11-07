@@ -58,6 +58,8 @@ pub fn run() {
             write_file_text,
             list_dir,
             set_window_mode,
+            get_autostart_status,
+            set_autostart,
         ])
         .run(tauri::generate_context!())
         .expect("error while running VISP tauri application");

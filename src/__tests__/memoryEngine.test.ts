@@ -101,3 +101,4 @@ describe('MemoryEngine (Second Brain)', () => {
     expect(extracted.some((m) => m.content.toLowerCase().includes('concise'))).toBe(true);
   });
 });
+

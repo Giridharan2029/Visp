@@ -105,3 +105,4 @@ describe('AIProviderService (Intelligence & Stream Fallback)', () => {
     expect(fullOutput).toContain('API key');
   });
 });
+

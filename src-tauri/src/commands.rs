@@ -105,6 +105,59 @@ pub fn list_dir(path: String) -> Result<Vec<FileEntry>, String> {
 }
 
 #[tauri::command]
+pub fn get_autostart_status() -> Result<bool, String> {
+    #[cfg(windows)]
+    {
+        use winreg::enums::{HKEY_CURRENT_USER, KEY_READ};
+        use winreg::RegKey;
+
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        match hkcu.open_subkey_with_flags(r"Software\Microsoft\Windows\CurrentVersion\Run", KEY_READ) {
+            Ok(run_key) => {
+                let val: Result<String, _> = run_key.get_value("VISP");
+                Ok(val.is_ok())
+            }
+            Err(_) => Ok(false),
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        Ok(false)
+    }
+}
+
+#[tauri::command]
+pub fn set_autostart(enable: bool) -> Result<bool, String> {
+    #[cfg(windows)]
+    {
+        use winreg::enums::HKEY_CURRENT_USER;
+        use winreg::RegKey;
+
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        let (run_key, _) = hkcu
+            .create_subkey(r"Software\Microsoft\Windows\CurrentVersion\Run")
+            .map_err(|e| format!("Failed to access run registry key: {}", e))?;
+
+        if enable {
+            let exe_path = std::env::current_exe()
+                .map_err(|e| format!("Could not get current executable path: {}", e))?;
+            let exe_str = exe_path.to_string_lossy().to_string();
+            run_key
+                .set_value("VISP", &exe_str)
+                .map_err(|e| format!("Failed to set registry value: {}", e))?;
+            Ok(true)
+        } else {
+            let _ = run_key.delete_value("VISP");
+            Ok(false)
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        Ok(false)
+    }
+}
+
+#[tauri::command]
 pub fn set_window_mode(app: AppHandle, mode: String) -> Result<(), String> {
     if let Some(window) = app.get_webview_window("main") {
         match mode.as_str() {
@@ -131,3 +184,4 @@ pub fn set_window_mode(app: AppHandle, mode: String) -> Result<(), String> {
         Err("Main window not found".to_string())
     }
 }
+

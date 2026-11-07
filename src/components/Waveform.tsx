@@ -43,3 +43,4 @@ export const Waveform: React.FC<WaveformProps> = ({
     </div>
   );
 };
+
